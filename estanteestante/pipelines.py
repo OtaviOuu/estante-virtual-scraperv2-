@@ -36,3 +36,15 @@ class SQLitePipeline:
 
         self.conn.commit()
         return item
+
+
+class TXTPipeline:
+    def open_spider(self, spider):
+        self.file = open("books.txt", "w")
+
+    def close_spider(self, spider):
+        self.file.close()
+
+    def process_item(self, item, spider):
+        self.file.write(item["book_title"] + "\n")
+        return item

@@ -49,6 +49,8 @@ class EstantevirtualSpider(Spider):
                 last_page_index = min(query_result // 44, 682)
             except ValueError:
                 last_page_index = 1
+            with open("last_page_index.txt", "w") as f:
+                f.write(f"{last_page_index}\n")
             for index in range(1, last_page_index + 1):
                 url = f"{response.url}&page={index}"
                 yield Request(
@@ -94,10 +96,28 @@ class EstantevirtualSpider(Spider):
             book_product = json_data["Product"]
 
         book_json = book_product["parents"][0]["skus"][0]
-        category = book_product["department"]["name"]
+        category = book_product["department"].get("name", "")
         book_title = book_product["name"]
 
-        group_title = book_json["name"]
+        attributes = book_product["templateAttributes"]
+        author = ""
+        language = ""
+        publisher = ""
+        year = ""
+        isbn = ""
+        for attribute in attributes:
+            att_name = attribute.get("name", "")
+            if att_name == "author":
+                author = attribute.get("value", "")
+            elif att_name == "language":
+                language = attribute.get("value", "")
+            elif att_name == "publisher":
+                publisher = attribute.get("value", "")
+            elif att_name == "year":
+                year = attribute.get("value", "")
+            elif att_name == "isbn":
+                isbn = attribute.get("value", "")
+
         book_description = book_json["longDescription"]
         try:
             book_price = book_json["prices"][0][
@@ -106,42 +126,60 @@ class EstantevirtualSpider(Spider):
         except Exception as e:
             book_price = book_json["price"]["finalPriceWithoutPaymentBenefitDiscount"]
         author = book_product["author"]
-        group_id = "-".join(response.url.split("-")[-4:])
 
         yield {
-            "url": response.url,
-            "group_id": group_id,
             "book_title": book_title,
-            "group_title": group_title,
             "book_description": book_description,
-            "book_price": book_price,
+            "book_price": int(book_price) / 100,
+            "condition": response.meta["condition"],
             "category": category,
             "author": author,
+            "language": language,
+            "publisher": publisher,
+            "year": year,
+            "isbn": isbn,
+            "id": "-".join(response.url.split("-")[-3:]),
         }
 
     def parse_group_api(self, response: Response):
         json_data = json.loads(response.text)
-        total_in_group = json_data["total"]
 
         group_books = json_data["parentSkus"]
         for book in group_books:
             book_title = book["name"]
             book_id = book["productCode"]
             book_price = int(book["listPrice"]) / 100
-            item_group_id = book["itemGroupId"]
-            iamges = {
-                "image": book["image"],
-                "image_detail": book["imageDetail"],
-                "image_zoom": book["imageZoom"],
-            }
+
             attributes = book["attributes"]
+            author = ""
+            language = ""
+            publisher = ""
+            year = ""
+            isbn = ""
+            isbn = ""
+            for attribute in attributes:
+                att_name = attribute.get("name", "")
+                if att_name == "author":
+                    author = attribute.get("value", "")
+                elif att_name == "language":
+                    language = attribute.get("value", "")
+                elif att_name == "publisher":
+                    publisher = attribute.get("value", "")
+                elif att_name == "year":
+                    year = attribute.get("value", "")
+                elif att_name == "isbn":
+                    isbn = attribute.get("value", "")
 
             yield {
-                "total_in_group": total_in_group,
                 "book_title": book_title,
-                "book_id": book_id,
+                "book_description": book["description"],
                 "book_price": book_price,
-                "item_group_id": item_group_id,
-                "images": iamges,
-                "attributes": attributes,
+                "condition": response.meta["condition"],
+                "category": book["department"],
+                "author": author,
+                "language": language,
+                "publisher": publisher,
+                "year": year,
+                "isbn": isbn,
+                "id": book_id,
             }
