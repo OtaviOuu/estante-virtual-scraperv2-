@@ -46,8 +46,6 @@ class EstantevirtualSpider(Spider):
                 last_page_index = min(query_result // 44, 682)
             except ValueError:
                 last_page_index = 1
-            with open("last_page_index.txt", "w") as f:
-                f.write(f"{last_page_index}\n")
             for index in range(1, last_page_index + 1):
                 url = f"{response.url}&page={index}"
                 yield Request(
@@ -117,10 +115,7 @@ class EstantevirtualSpider(Spider):
             book_price = book_json["price"]["finalPriceWithoutPaymentBenefitDiscount"]
         author = book_product["author"]
 
-        with open("books.txt", "a") as f:
-            f.write(f"{book_title}\n")
-
-            yield {
+        yield {
                 "book_title": book_title,
                 "book_description": book_description,
                 "book_price": int(book_price) / 100,
