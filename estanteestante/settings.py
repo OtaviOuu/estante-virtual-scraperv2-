@@ -71,9 +71,9 @@ DEFAULT_REQUEST_HEADERS = {
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-# ITEM_PIPELINES = {
-#    "estanteestante.pipelines.EstanteestantePipeline": 300,
-# }
+ITEM_PIPELINES = {
+    "estanteestante.pipelines.SQLitePipeline": 300,
+}
 
 
 # Enable and configure the AutoThrottle extension (disabled by default)
