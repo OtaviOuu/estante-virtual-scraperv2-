@@ -7,8 +7,10 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 from random_user_agent.user_agent import UserAgent
-import random
+import dotenv
+import os
 
+dotenv.load_dotenv()
 
 user_agent_rotator = UserAgent()
 
@@ -26,7 +28,7 @@ USER_AGENT = user_agent_rotator.get_random_user_agent()
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 1000
+CONCURRENT_REQUESTS = 64
 
 
 # Configure a delay for requests for the same website (default: 0)
@@ -45,7 +47,7 @@ CONCURRENT_REQUESTS = 1000
 
 # Override the default request headers:
 DEFAULT_REQUEST_HEADERS = {
-    "cookie": "for some reason this is needed",
+    "cookie": os.getenv("COOKIES"),
 }
 
 
