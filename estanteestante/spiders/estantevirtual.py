@@ -21,20 +21,17 @@ class EstantevirtualSpider(Spider):
         ).getall()
 
         for category in categorys:
-            url_usada = f"{self.base_url}{category}?tipo-de-livro=usado"
-            url_nova = f"{self.base_url}{category}?tipo-de-livro=novo"
-
-            yield Request(
-                url=url_usada,
-                callback=self.parse_pagination,
-                meta={"condition": "usado"},
-            )
-
-            yield Request(
-                url=url_nova,
-                callback=self.parse_pagination,
-                meta={"condition": "novo"},
-            )
+            for condition in ["usado", "novo"]:
+                yield Request(
+                    url=f"{self.base_url}{category}?tipo-de-livro={condition}",
+                    callback=self.parse_pagination,
+                    meta={"condition": condition},
+                )
+                yield Request(
+                    url=f"{self.base_url}/busca?categoria={category[1:]}&tipo-de-livro={condition}",
+                    callback=self.parse_pagination,
+                    meta={"condition": condition},
+                )
 
     def parse_pagination(self, response: Response):
         results = response.css(".product-list-header__sort__text::text").get()
@@ -100,23 +97,16 @@ class EstantevirtualSpider(Spider):
         book_title = book_product["name"]
 
         attributes = book_product["templateAttributes"]
-        author = ""
-        language = ""
-        publisher = ""
-        year = ""
-        isbn = ""
-        for attribute in attributes:
-            att_name = attribute.get("name", "")
-            if att_name == "author":
-                author = attribute.get("value", "")
-            elif att_name == "language":
-                language = attribute.get("value", "")
-            elif att_name == "publisher":
-                publisher = attribute.get("value", "")
-            elif att_name == "year":
-                year = attribute.get("value", "")
-            elif att_name == "isbn":
-                isbn = attribute.get("value", "")
+        attribute_map = {
+            attribute.get("name", "").lower(): attribute.get("value", "")
+            for attribute in attributes
+        }
+
+        author = attribute_map.get("author", "")
+        language = attribute_map.get("language", "")
+        publisher = attribute_map.get("publisher", "")
+        year = attribute_map.get("year", "")
+        isbn = attribute_map.get("isbn", "")
 
         book_description = book_json["longDescription"]
         try:
@@ -127,19 +117,22 @@ class EstantevirtualSpider(Spider):
             book_price = book_json["price"]["finalPriceWithoutPaymentBenefitDiscount"]
         author = book_product["author"]
 
-        yield {
-            "book_title": book_title,
-            "book_description": book_description,
-            "book_price": int(book_price) / 100,
-            "condition": response.meta["condition"],
-            "category": category,
-            "author": author,
-            "language": language,
-            "publisher": publisher,
-            "year": year,
-            "isbn": isbn,
-            "id": "-".join(response.url.split("-")[-3:]),
-        }
+        with open("books.txt", "a") as f:
+            f.write(f"{book_title}\n")
+
+            yield {
+                "book_title": book_title,
+                "book_description": book_description,
+                "book_price": int(book_price) / 100,
+                "condition": response.meta["condition"],
+                "category": category,
+                "author": author,
+                "language": language,
+                "publisher": publisher,
+                "year": year,
+                "isbn": isbn,
+                "id": "-".join(response.url.split("-")[-3:]),
+            }
 
     def parse_group_api(self, response: Response):
         json_data = json.loads(response.text)
@@ -150,26 +143,19 @@ class EstantevirtualSpider(Spider):
             book_id = book["productCode"]
             book_price = int(book["listPrice"]) / 100
 
-            attributes = book["attributes"]
-            author = ""
-            language = ""
-            publisher = ""
-            year = ""
-            isbn = ""
-            isbn = ""
-            for attribute in attributes:
-                att_name = attribute.get("name", "")
-                if att_name == "author":
-                    author = attribute.get("value", "")
-                elif att_name == "language":
-                    language = attribute.get("value", "")
-                elif att_name == "publisher":
-                    publisher = attribute.get("value", "")
-                elif att_name == "year":
-                    year = attribute.get("value", "")
-                elif att_name == "isbn":
-                    isbn = attribute.get("value", "")
-
+            attributes = {
+                attr.get("name", "").lower(): attr.get("value", "")
+                for attr in book["attributes"]
+            }
+            author = attributes.get("author", "")
+            language = attributes.get("language", "")
+            publisher = attributes.get("publisher", "")
+            year = attributes.get("year", "")
+            isbn = attributes.get("isbn", "")
+            """ 
+            with open("books.txt", "a") as f:
+                f.write(f"{book_title}\n")
+        """
             yield {
                 "book_title": book_title,
                 "book_description": book["description"],
