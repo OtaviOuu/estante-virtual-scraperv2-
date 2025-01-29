@@ -2,33 +2,44 @@ from scrapy import Spider, Request
 from scrapy.http import Response
 
 import json
+import os
+import questionary
 
 
 class EstantevirtualSpider(Spider):
-    name = "estantevirtuall"
+    name = "estantevirtual"
     allowed_domains = ["estantevirtual.com.br"]
     base_url = "https://www.estantevirtual.com.br"
 
+    def __init__(self, categories=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.categories = categories.split(",")
+
+    """
     def start_requests(self):
         yield Request(
             url=f"{self.base_url}/categoria",
             callback=self.parse_categorys,
         )
+    """
 
-    def parse_categorys(self, response: Response):
+    def start_requests(self):
+        """
         categorys = response.css(
             ".estantes-list-container ul li a::attr(href)"
         ).getall()
-
-        for category in categorys:
+        """
+        for category in self.categories:
             for condition in ["usado", "novo"]:
+
                 yield Request(
-                    url=f"{self.base_url}{category}?tipo-de-livro={condition}",
+                    url=f"{self.base_url}/{category}?tipo-de-livro={condition}",
                     callback=self.parse_pagination,
                     meta={"condition": condition},
                 )
+
                 yield Request(
-                    url=f"{self.base_url}/busca?categoria={category[1:]}&tipo-de-livro={condition}",
+                    url=f"{self.base_url}/busca?categoria={category}&tipo-de-livro={condition}",
                     callback=self.parse_pagination,
                     meta={"condition": condition},
                 )
@@ -116,18 +127,18 @@ class EstantevirtualSpider(Spider):
         author = book_product["author"]
 
         yield {
-                "book_title": book_title,
-                "book_description": book_description,
-                "book_price": int(book_price) / 100,
-                "condition": response.meta["condition"],
-                "category": category,
-                "author": author,
-                "language": language,
-                "publisher": publisher,
-                "year": year,
-                "isbn": isbn,
-                "id": "-".join(response.url.split("-")[-3:]),
-            }
+            "book_title": book_title,
+            "book_description": book_description,
+            "book_price": int(book_price) / 100,
+            "condition": response.meta["condition"],
+            "category": category,
+            "author": author,
+            "language": language,
+            "publisher": publisher,
+            "year": year,
+            "isbn": isbn,
+            "id": "-".join(response.url.split("-")[-3:]),
+        }
 
     def parse_group_api(self, response: Response):
         json_data = json.loads(response.text)
