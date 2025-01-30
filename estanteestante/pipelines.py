@@ -10,6 +10,7 @@ import sqlite3
 
 import sqlite3
 
+
 class SQLitePipeline:
     def open_spider(self, spider):
         self.conn = sqlite3.connect("books.db")
@@ -34,7 +35,7 @@ class SQLitePipeline:
         )
 
     def close_spider(self, spider):
-        self.conn.commit()  
+        self.conn.commit()
         self.conn.close()
 
     def process_item(self, item, spider):
@@ -71,5 +72,3 @@ class SQLitePipeline:
 
         self.conn.commit()
         return item
-
-
