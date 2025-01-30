@@ -10,7 +10,7 @@ from random_user_agent.user_agent import UserAgent
 import dotenv
 import os
 
-dotenv.load_dotenv()
+dotenv.load_dotenv(override=True)
 
 user_agent_rotator = UserAgent()
 
@@ -28,7 +28,7 @@ USER_AGENT = user_agent_rotator.get_random_user_agent()
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 64
+CONCURRENT_REQUESTS = 16
 
 
 # Configure a delay for requests for the same website (default: 0)
@@ -47,7 +47,19 @@ CONCURRENT_REQUESTS = 64
 
 # Override the default request headers:
 DEFAULT_REQUEST_HEADERS = {
-    "cookie": os.getenv("COOKIES"),
+    "cookie": os.environ.get("COOKIES"),
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "accept-language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7,fr;q=0.6",
+    "cache-control": "max-age=0",
+    "priority": "u=0, i",
+    "sec-ch-ua": '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Linux"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "none",
+    "sec-fetch-user": "?1",
+    "upgrade-insecure-requests": "1",
 }
 
 
@@ -98,6 +110,7 @@ REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
 
+"""
 FEEDS = {
     "data.jsonl": {  # Define o arquivo com a extensão .jsonl
         "format": "jsonlines",  # Especifica o formato como jsonlines
@@ -105,3 +118,4 @@ FEEDS = {
         "store_empty": False,  # Não salva o arquivo se estiver vazio
     }
 }
+"""

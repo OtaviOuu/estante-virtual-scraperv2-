@@ -2,8 +2,12 @@ from scrapy import Spider, Request
 from scrapy.http import Response
 
 import json
-import os
-import questionary
+import re
+
+
+def save_json(data, filename):
+    with open(filename, "w") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
 
 
 class EstantevirtualSpider(Spider):
@@ -15,34 +19,46 @@ class EstantevirtualSpider(Spider):
         super().__init__(*args, **kwargs)
         self.categories = categories.split(",")
 
-    """
     def start_requests(self):
-        yield Request(
-            url=f"{self.base_url}/categoria",
-            callback=self.parse_categorys,
-        )
-    """
-
-    def start_requests(self):
-        """
-        categorys = response.css(
-            ".estantes-list-container ul li a::attr(href)"
-        ).getall()
-        """
         for category in self.categories:
+
             for condition in ["usado", "novo"]:
+                yield Request(
+                    url=f"{self.base_url}/busca?categoria={category}&tipo-de-livro={condition}",
+                    callback=self.parse_authors,
+                    meta={"condition": condition},
+                )
 
                 yield Request(
                     url=f"{self.base_url}/{category}?tipo-de-livro={condition}",
-                    callback=self.parse_pagination,
+                    callback=self.parse_authors,
                     meta={"condition": condition},
                 )
 
-                yield Request(
-                    url=f"{self.base_url}/busca?categoria={category}&tipo-de-livro={condition}",
-                    callback=self.parse_pagination,
-                    meta={"condition": condition},
-                )
+    # bypass do limite
+    def parse_authors(self, response: Response):
+        initial_state = json.loads(
+            response.css("script")[-4]
+            .get()
+            .strip()
+            .replace("<script>window.__INITIAL_STATE__=", "")
+            .replace("</script>", "")
+        )
+
+        editoras = initial_state["SearchPage"]["normalizedAggregates"]["editora"][
+            "filters"
+        ]
+
+        for editora in editoras:
+            editora_slug = editora["value"]
+
+            url_with_editora = f"{response.url}&editora={editora_slug}"
+
+            yield Request(
+                url=url_with_editora,
+                callback=self.parse_pagination,
+                meta={"condition": response.meta["condition"]},
+            )
 
     def parse_pagination(self, response: Response):
         results = response.css(".product-list-header__sort__text::text").get()
@@ -59,6 +75,7 @@ class EstantevirtualSpider(Spider):
                 last_page_index = 1
             for index in range(1, last_page_index + 1):
                 url = f"{response.url}&page={index}"
+
                 yield Request(
                     url=url,
                     callback=self.parse_links,
@@ -158,10 +175,7 @@ class EstantevirtualSpider(Spider):
             publisher = attributes.get("publisher", "")
             year = attributes.get("year", "")
             isbn = attributes.get("isbn", "")
-            """ 
-            with open("books.txt", "a") as f:
-                f.write(f"{book_title}\n")
-        """
+
             yield {
                 "book_title": book_title,
                 "book_description": book["description"],
