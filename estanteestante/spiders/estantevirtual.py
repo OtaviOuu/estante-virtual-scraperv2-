@@ -67,27 +67,26 @@ class EstantevirtualSpider(Spider):
                 )
 
     def parse_book_links(self, response: Response):
-        urls = response.css(".product-list__items #product-item a::attr(href)").getall()
-        for url in urls:
+        books = response.css(".product-list__items #product-item a")
+
+        for book in books:
+            book_id = book.attrib["data-smarthintitemgroupid"]
+            book_url = book.attrib["href"]
+            if "000-BK" in book_id:
+                yield Request(
+                    url=f"{self.base_url}{book_url}",
+                    callback=self.parse_group_book,
+                    meta={"condition": response.meta["condition"], "book_id": book_id},
+                )
+                return
+
             yield Request(
-                url=f"{self.base_url}{url}",
-                callback=self.parse_group_book,
+                url=f"{self.base_url}{book_url}",
+                callback=self.parse_book_data,
                 meta={"condition": response.meta["condition"]},
             )
 
-    def parse_group_book(self, response: Response):
-        if "000-BK" in response.url:
-            group_id = "-".join(response.url.split("-")[-4:])
-            api = f"{self.base_url}/pdp-api/api/searchProducts/{group_id}/{response.meta['condition']}?pageSize=999&page=1&sort=lowest-first"
-
-            yield Request(
-                url=api,
-                callback=self.scrape_group_api,
-                meta={"condition": response.meta["condition"]},
-            )
-            return
-
-        # bizarro, mas regex ta meio mé...
+    def parse_book_data(self, response: Response):
         json_data = json.loads(
             response.css("script")[-3]
             .get()
@@ -139,6 +138,17 @@ class EstantevirtualSpider(Spider):
             "isbn": isbn,
             "id": "-".join(response.url.split("-")[-3:]),
         }
+
+    def parse_group_book(self, response: Response):
+        group_id = response.meta["book_id"]
+        condition = response.meta["condition"]
+        api = f"{self.base_url}/pdp-api/api/searchProducts/{group_id}/{condition}?pageSize=999&page=1&sort=lowest-first"
+
+        yield Request(
+            url=api,
+            callback=self.scrape_group_api,
+            meta={"condition": response.meta["condition"]},
+        )
 
     def scrape_group_api(self, response: Response):
         json_data = json.loads(response.text)
