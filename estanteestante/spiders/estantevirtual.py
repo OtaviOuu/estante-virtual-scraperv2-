@@ -15,49 +15,34 @@ class EstantevirtualSpider(Spider):
     allowed_domains = ["estantevirtual.com.br"]
     base_url = "https://www.estantevirtual.com.br"
 
-    def __init__(self, categories=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.categories = categories.split(",")
-
     def start_requests(self):
-        for category in self.categories:
-
-            for condition in ["usado", "novo"]:
-                yield Request(
-                    url=f"{self.base_url}/busca?categoria={category}&tipo-de-livro={condition}",
-                    callback=self.parse_authors,
-                    meta={"condition": condition},
-                )
-
-                yield Request(
-                    url=f"{self.base_url}/{category}?tipo-de-livro={condition}",
-                    callback=self.parse_authors,
-                    meta={"condition": condition},
-                )
-
-    # bypass do limite
-    def parse_authors(self, response: Response):
-        initial_state = json.loads(
-            response.css("script")[-4]
-            .get()
-            .strip()
-            .replace("<script>window.__INITIAL_STATE__=", "")
-            .replace("</script>", "")
+        yield Request(
+            url=f"{self.base_url}/categoria",
+            callback=self.parse_categories,
         )
 
-        editoras = initial_state["SearchPage"]["normalizedAggregates"]["editora"][
-            "filters"
-        ]
-
-        for editora in editoras:
-            editora_slug = editora["value"]
-
-            url_with_editora = f"{response.url}&editora={editora_slug}"
-
+    def parse_categories(self, response: Response):
+        categories = response.css(
+            ".estantes-list-container ul li a::attr(href)"
+        ).getall()
+        for category in categories:
+            """
+             yield Request(
+                url=f"{self.base_url}{category}",
+                callback=self.parse_conditions,
+            )
+            """
             yield Request(
-                url=url_with_editora,
+                url=f"{self.base_url}/busca?categoria={category[1:]}",
+                callback=self.parse_conditions,
+            )
+
+    def parse_conditions(self, response: Response):
+        for condition in ["usado", "novo"]:
+            yield Request(
+                url=f"{response.url}&tipo-de-livro={condition}",
                 callback=self.parse_pagination,
-                meta={"condition": response.meta["condition"]},
+                meta={"condition": condition},
             )
 
     def parse_pagination(self, response: Response):
@@ -70,19 +55,18 @@ class EstantevirtualSpider(Spider):
                     .split(" resultados")[0]
                     .replace(".", "")
                 )
+
                 last_page_index = min(query_result // 44, 682)
             except ValueError:
                 last_page_index = 1
             for index in range(1, last_page_index + 1):
-                url = f"{response.url}&page={index}"
-
                 yield Request(
-                    url=url,
-                    callback=self.parse_links,
+                    url=f"{response.url}&page={index}",
+                    callback=self.parse_book_links,
                     meta={"condition": response.meta["condition"]},
                 )
 
-    def parse_links(self, response: Response):
+    def parse_book_links(self, response: Response):
         urls = response.css(".product-list__items #product-item a::attr(href)").getall()
         for url in urls:
             yield Request(
@@ -98,7 +82,7 @@ class EstantevirtualSpider(Spider):
 
             yield Request(
                 url=api,
-                callback=self.parse_group_api,
+                callback=self.scrape_group_api,
                 meta={"condition": response.meta["condition"]},
             )
             return
@@ -114,7 +98,6 @@ class EstantevirtualSpider(Spider):
 
         try:
             book_product = json_data["json"]["Product"]
-
         except Exception as e:
             book_product = json_data["Product"]
 
@@ -157,7 +140,7 @@ class EstantevirtualSpider(Spider):
             "id": "-".join(response.url.split("-")[-3:]),
         }
 
-    def parse_group_api(self, response: Response):
+    def scrape_group_api(self, response: Response):
         json_data = json.loads(response.text)
 
         group_books = json_data["parentSkus"]
