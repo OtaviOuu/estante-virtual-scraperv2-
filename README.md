@@ -1,3 +1,4 @@
+---
 ![faixa_preco](https://github.com/user-attachments/assets/f7994af3-e1af-45f1-afe4-12f452546ced)
 ![barras_categorias](https://github.com/user-attachments/assets/1b3f459a-6c0f-41cc-abd8-9299dd986eed)
 
