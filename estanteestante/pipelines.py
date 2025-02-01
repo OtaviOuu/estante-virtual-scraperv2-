@@ -8,9 +8,6 @@
 import sqlite3
 
 
-import sqlite3
-
-
 class SQLitePipeline:
     def open_spider(self, spider):
         self.conn = sqlite3.connect("books.db")

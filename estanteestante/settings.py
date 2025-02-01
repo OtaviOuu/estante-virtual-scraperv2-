@@ -119,3 +119,7 @@ FEEDS = {
     }
 }
 """
+
+LOG_LEVEL = "ERROR"
+LOG_FORMAT = "%(levelname)s: %(message)s"
+LOG_FILE = "log.txt"

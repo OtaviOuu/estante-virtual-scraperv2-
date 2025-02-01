@@ -71,19 +71,18 @@ class EstantevirtualSpider(Spider):
         for book in books:
             book_id = book.attrib["data-smarthintitemgroupid"]
             book_url = book.attrib["href"]
-            if "000-BK" in book_id:
+            if "-BK" in book_id:
                 yield Request(
                     url=f"{self.base_url}{book_url}",
                     callback=self.parse_group_book,
                     meta={"condition": response.meta["condition"], "book_id": book_id},
                 )
-                return
-
-            yield Request(
-                url=f"{self.base_url}{book_url}",
-                callback=self.parse_book_data,
-                meta={"condition": response.meta["condition"]},
-            )
+            else:
+                yield Request(
+                    url=f"{self.base_url}{book_url}",
+                    callback=self.parse_book_data,
+                    meta={"condition": response.meta["condition"]},
+                )
 
     def parse_book_data(self, response: Response):
         json_data = json.loads(
