@@ -9,6 +9,10 @@ class EstantevirtualSpider(Spider):
     allowed_domains = ["estantevirtual.com.br"]
     base_url = "https://www.estantevirtual.com.br"
 
+    def __init__(self, categories=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.categories = categories.split(",")
+
     def start_requests(self):
         yield Request(
             url=f"{self.base_url}/categoria",
@@ -16,83 +20,12 @@ class EstantevirtualSpider(Spider):
         )
 
     def parse_categories(self, response: Response):
+        """
         categories = response.css(
             ".estantes-list-container ul li a::attr(href)"
         ).getall()
-        for category in [
-            "biografias",
-            "colecoes",
-            "comportamento",
-            "contos",
-            "critica-literaria",
-            "ficcao-cientifica",
-            "folclore",
-            "genealogia",
-            "humor",
-            "infanto-juvenis",
-            "jogos",
-            "jornais",
-            "literatura-brasileira",
-            "literatura-estrangeira",
-            "livros-raros",
-            "manuscritos",
-            "poesia",
-            "outros-assuntos",
-            "administracao",
-            "agricultura",
-            "antropologia",
-            "arqueologia",
-            "arquitetura",
-            "artes",
-            "astronomia",
-            "biologia",
-            "botanica",
-            "brasil",
-            "ciencia-politica",
-            "ciencias-exatas",
-            "cinema",
-            "comunicacao",
-            "contabilidade",
-            "decoracao",
-            "dicionarios",
-            "didaticos",
-            "direito",
-            "documentos",
-            "ecologia",
-            "economia",
-            "engenharia",
-            "enciclopedias",
-            "ensino-de-idiomas",
-            "filosofia",
-            "fotografia",
-            "geografia",
-            "guerra",
-            "historia-do-brasil",
-            "historia-geral",
-            "informatica",
-            "linguistica",
-            "medicina",
-            "moda",
-            "musica",
-            "pecuaria",
-            "pedagogia",
-            "pintura",
-            "psicologia",
-            "saude",
-            "sociologia",
-            "teatro",
-            "turismo",
-            "artesanato",
-            "auto-ajuda",
-            "culinaria",
-            "esoterismo",
-            "esportes",
-            "hobbies",
-            "religiao",
-            "sexualidade",
-            "revistas",
-            "gibis",
-        ]:
+        """
+        for category in self.categories:
             yield Request(
                 url=f"{self.base_url}/{category}",
                 callback=self.parse_conditions,

@@ -11,8 +11,7 @@ def get_categories():
     )
     tree = HTMLParser(response.text)
     categories = tree.css(".estantes-list-container ul li a")
-    print([c.attrs["href"][1:] for c in categories])
-    return
+    return [c.attrs["href"][1:] for c in categories]
 
 
 def select():
