@@ -11,12 +11,15 @@ def get_categories():
     )
     tree = HTMLParser(response.text)
     categories = tree.css(".estantes-list-container ul li a")
-    return [c.attrs["href"][1:] for c in categories]
+    print([c.attrs["href"][1:] for c in categories])
+    return
 
 
 def select():
     categorias = get_categories()
-    selecionadas = questionary.checkbox("Select categories", choices=categorias).ask()
+    selecionadas = questionary.checkbox(
+        "escolhe as categorias ai", choices=categorias
+    ).ask()
 
     return selecionadas
 

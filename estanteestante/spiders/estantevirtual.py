@@ -2,12 +2,6 @@ from scrapy import Spider, Request
 from scrapy.http import Response
 
 import json
-import re
-
-
-def save_json(data, filename):
-    with open(filename, "w") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
 
 
 class EstantevirtualSpider(Spider):
@@ -25,15 +19,87 @@ class EstantevirtualSpider(Spider):
         categories = response.css(
             ".estantes-list-container ul li a::attr(href)"
         ).getall()
-        for category in categories:
-            """
-             yield Request(
-                url=f"{self.base_url}{category}",
+        for category in [
+            "biografias",
+            "colecoes",
+            "comportamento",
+            "contos",
+            "critica-literaria",
+            "ficcao-cientifica",
+            "folclore",
+            "genealogia",
+            "humor",
+            "infanto-juvenis",
+            "jogos",
+            "jornais",
+            "literatura-brasileira",
+            "literatura-estrangeira",
+            "livros-raros",
+            "manuscritos",
+            "poesia",
+            "outros-assuntos",
+            "administracao",
+            "agricultura",
+            "antropologia",
+            "arqueologia",
+            "arquitetura",
+            "artes",
+            "astronomia",
+            "biologia",
+            "botanica",
+            "brasil",
+            "ciencia-politica",
+            "ciencias-exatas",
+            "cinema",
+            "comunicacao",
+            "contabilidade",
+            "decoracao",
+            "dicionarios",
+            "didaticos",
+            "direito",
+            "documentos",
+            "ecologia",
+            "economia",
+            "engenharia",
+            "enciclopedias",
+            "ensino-de-idiomas",
+            "filosofia",
+            "fotografia",
+            "geografia",
+            "guerra",
+            "historia-do-brasil",
+            "historia-geral",
+            "informatica",
+            "linguistica",
+            "medicina",
+            "moda",
+            "musica",
+            "pecuaria",
+            "pedagogia",
+            "pintura",
+            "psicologia",
+            "saude",
+            "sociologia",
+            "teatro",
+            "turismo",
+            "artesanato",
+            "auto-ajuda",
+            "culinaria",
+            "esoterismo",
+            "esportes",
+            "hobbies",
+            "religiao",
+            "sexualidade",
+            "revistas",
+            "gibis",
+        ]:
+            yield Request(
+                url=f"{self.base_url}/{category}",
                 callback=self.parse_conditions,
             )
-            """
+
             yield Request(
-                url=f"{self.base_url}/busca?categoria={category[1:]}",
+                url=f"{self.base_url}/busca?categoria={category}",
                 callback=self.parse_conditions,
             )
 
