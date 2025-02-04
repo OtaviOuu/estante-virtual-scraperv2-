@@ -26,6 +26,7 @@ class SQLitePipeline:
                 publisher TEXT,
                 year TEXT,
                 isbn TEXT,
+                img_url TEXT,
                 id TEXT
             )
             """
@@ -49,8 +50,9 @@ class SQLitePipeline:
                 publisher,
                 year,
                 isbn,
+                img_url,
                 id
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 item["book_title"],
@@ -63,6 +65,7 @@ class SQLitePipeline:
                 item["publisher"],
                 item["year"],
                 item["isbn"],
+                item.get("img", ""),  # ?
                 item["id"],
             ),
         )

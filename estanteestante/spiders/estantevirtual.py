@@ -84,7 +84,11 @@ class EstantevirtualSpider(Spider):
                     meta={"condition": response.meta["condition"]},
                 )
 
+    # para nãõ grupos -> json do html
     def parse_book_data(self, response: Response):
+        img = response.css(
+            ".book-copy__cover img[src^='https://static.estantevirtual.com.br/book/']::attr(src)"
+        ).get()
         json_data = json.loads(
             response.css("script")[-3]
             .get()
@@ -134,6 +138,7 @@ class EstantevirtualSpider(Spider):
             "publisher": publisher,
             "year": year,
             "isbn": isbn,
+            "img": img,
             "id": "-".join(response.url.split("-")[-3:]),
         }
 
@@ -148,6 +153,7 @@ class EstantevirtualSpider(Spider):
             meta={"condition": response.meta["condition"]},
         )
 
+    # para grupos -> api
     def scrape_group_api(self, response: Response):
         json_data = json.loads(response.text)
 
@@ -178,5 +184,6 @@ class EstantevirtualSpider(Spider):
                 "publisher": publisher,
                 "year": year,
                 "isbn": isbn,
+                "img": book["image"],
                 "id": book_id,
             }
